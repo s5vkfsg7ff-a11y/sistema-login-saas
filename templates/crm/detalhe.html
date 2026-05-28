@@ -1,0 +1,102 @@
+{% extends "base.html" %}
+{% block page_title %}{{ cliente.nome }}{% endblock %}
+{% block page_title_topbar %}{{ cliente.nome }}{% endblock %}
+
+{% block content %}
+
+<div class="page-head">
+  <div class="page-head-text">
+    <h1>{{ cliente.nome }}</h1>
+    <p>{{ cliente.empresa or 'Sem empresa' }} · <span class="badge badge-{{ cliente.status }}">{{ cliente.status }}</span></p>
+  </div>
+  <div style="display:flex;gap:.5rem">
+    <a href="{{ url_for('crm_editar', cid=cliente.id) }}" class="btn btn-sm btn-ghost">Editar</a>
+    <a href="{{ url_for('crm') }}" class="btn btn-sm btn-ghost">← Clientes</a>
+  </div>
+</div>
+
+<div class="dash-grid">
+
+  <!-- Client info -->
+  <div style="display:flex;flex-direction:column;gap:1.25rem">
+
+    <div class="card">
+      <div class="card-head"><h2>Informações</h2></div>
+      <div class="card-body">
+        <div style="display:flex;flex-direction:column;gap:.875rem">
+
+          {% macro info_row(label, value) %}
+          <div>
+            <p style="font-size:.75rem;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--text-3);margin-bottom:.25rem">{{ label }}</p>
+            <p style="font-size:.9375rem;color:var(--text)">{{ value or '—' }}</p>
+          </div>
+          {% endmacro %}
+
+          {{ info_row('Nome', cliente.nome) }}
+          {{ info_row('Empresa', cliente.empresa) }}
+          {{ info_row('E-mail', cliente.email) }}
+          {{ info_row('Telefone', cliente.telefone) }}
+          {{ info_row('Cadastrado em', cliente.criado_em[:10] if cliente.criado_em else None) }}
+        </div>
+      </div>
+    </div>
+
+    <!-- Deals -->
+    <div class="card">
+      <div class="card-head">
+        <h2>Deals</h2>
+        <a href="{{ url_for('pipeline') }}" class="btn btn-xs btn-ghost">Ver pipeline</a>
+      </div>
+      {% if deals %}
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th>Título</th><th>Etapa</th><th style="text-align:right">Valor</th></tr></thead>
+          <tbody>
+            {% for d in deals %}
+            <tr>
+              <td style="font-weight:500;color:var(--text)">{{ d.titulo }}</td>
+              <td><span class="badge badge-{{ d.etapa }}">{{ d.etapa }}</span></td>
+              <td style="text-align:right;font-weight:600;color:var(--ok-fg)">{{ d.valor | brl }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% else %}
+      <div class="empty-state" style="padding:1.5rem">Nenhum deal vinculado.</div>
+      {% endif %}
+    </div>
+
+  </div>
+
+  <!-- Notes -->
+  <div class="card" style="display:flex;flex-direction:column">
+    <div class="card-head"><h2>Anotações</h2></div>
+    <div class="card-body" style="flex:1;display:flex;flex-direction:column">
+
+      <form method="POST" action="{{ url_for('crm_nota', cid=cliente.id) }}" style="margin-bottom:1.25rem">
+        <div class="field" style="margin-bottom:.5rem">
+          <textarea name="texto" placeholder="Adicione uma nota…" rows="3" required></textarea>
+        </div>
+        <button type="submit" class="btn btn-primary btn-sm">Salvar nota</button>
+      </form>
+
+      {% if notas %}
+      <div class="notes-list">
+        {% for n in notas %}
+        <div class="note-item">
+          <p class="note-text">{{ n.texto }}</p>
+          <p class="note-time">{{ n.criado_em[:16] if n.criado_em else '' }}</p>
+        </div>
+        {% endfor %}
+      </div>
+      {% else %}
+      <div class="empty-state" style="padding:1.5rem 0">Nenhuma nota ainda.</div>
+      {% endif %}
+
+    </div>
+  </div>
+
+</div>
+
+{% endblock %}

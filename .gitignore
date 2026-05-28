@@ -1,0 +1,29 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.egg-info/
+dist/
+build/
+
+# Virtual env
+venv/
+.venv/
+env/
+
+# Database (don't commit user data)
+*.db
+*.sqlite3
+
+# Environment
+.env
+.env.local
+
+# macOS
+.DS_Store
+
+# IDE
+.vscode/
+.idea/

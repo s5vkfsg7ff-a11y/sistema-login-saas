@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% block page_title %}Editar — {{ cliente.nome }}{% endblock %}
+{% block page_title_topbar %}Editar cliente{% endblock %}
+
+{% block content %}
+
+<div class="page-head">
+  <div class="page-head-text">
+    <h1>Editar cliente</h1>
+    <p>{{ cliente.nome }}</p>
+  </div>
+  <a href="{{ url_for('crm_detalhe', cid=cliente.id) }}" class="btn btn-sm btn-ghost">← Voltar</a>
+</div>
+
+<div class="card" style="max-width:600px">
+  <div class="card-head"><h2>Informações do cliente</h2></div>
+  <div class="card-body">
+    <form method="POST">
+
+      <div class="form-row">
+        <div class="field">
+          <label for="nome">Nome *</label>
+          <input type="text" id="nome" name="nome" value="{{ cliente.nome }}" required />
+        </div>
+        <div class="field">
+          <label for="empresa">Empresa</label>
+          <input type="text" id="empresa" name="empresa" value="{{ cliente.empresa or '' }}" />
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="field">
+          <label for="email">E-mail</label>
+          <input type="email" id="email" name="email" value="{{ cliente.email or '' }}" />
+        </div>
+        <div class="field">
+          <label for="telefone">Telefone</label>
+          <input type="tel" id="telefone" name="telefone" value="{{ cliente.telefone or '' }}" />
+        </div>
+      </div>
+
+      <div class="field">
+        <label for="status">Status</label>
+        <select id="status" name="status">
+          <option value="lead"    {% if cliente.status == 'lead' %}selected{% endif %}>Lead</option>
+          <option value="ativo"   {% if cliente.status == 'ativo' %}selected{% endif %}>Ativo</option>
+          <option value="inativo" {% if cliente.status == 'inativo' %}selected{% endif %}>Inativo</option>
+        </select>
+      </div>
+
+      <div style="display:flex;gap:.75rem;margin-top:.25rem">
+        <button type="submit" class="btn btn-primary" style="flex:1">Salvar alterações</button>
+        <a href="{{ url_for('crm_detalhe', cid=cliente.id) }}" class="btn btn-ghost">Cancelar</a>
+      </div>
+    </form>
+  </div>
+</div>
+
+{% endblock %}

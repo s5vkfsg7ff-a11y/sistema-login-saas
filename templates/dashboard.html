@@ -1,0 +1,117 @@
+{% extends "base.html" %}
+
+{% block page_title %}Dashboard{% endblock %}
+{% block page_title_topbar %}Dashboard{% endblock %}
+
+{% block content %}
+
+<div class="page-head">
+  <div class="page-head-text">
+    <h1>Bem-vindo, {{ session.get('user_nome','').split()[0] }}</h1>
+    <p>Visão geral da sua conta — {{ now if now else '' }}</p>
+  </div>
+  <a href="{{ url_for('financeiro_nova') }}" class="btn btn-primary btn-sm">+ Nova transação</a>
+</div>
+
+<!-- Stats -->
+<div class="stats">
+  <div class="stat">
+    <p class="stat-eye">Clientes</p>
+    <p class="stat-num">{{ total_clientes }}</p>
+  </div>
+  <div class="stat">
+    <p class="stat-eye">Deals ativos</p>
+    <p class="stat-num">{{ total_deals }}</p>
+  </div>
+  <div class="stat">
+    <p class="stat-eye">Receita este mês</p>
+    <p class="stat-num ok sm">{{ receita_mes | brl }}</p>
+  </div>
+  <div class="stat">
+    <p class="stat-eye">Saldo do mês</p>
+    <p class="stat-num {% if saldo_mes >= 0 %}ok{% else %}err{% endif %} sm">{{ saldo_mes | brl }}</p>
+  </div>
+</div>
+
+<div class="dash-grid">
+
+  <!-- Recent clients -->
+  <div class="card">
+    <div class="card-head">
+      <h2>Últimos clientes</h2>
+      <a href="{{ url_for('crm') }}" class="btn btn-xs btn-ghost">Ver todos</a>
+    </div>
+    {% if ult_clientes %}
+    <div class="tbl-wrap">
+      <table>
+        <thead>
+          <tr><th>Nome</th><th>Empresa</th><th>Status</th></tr>
+        </thead>
+        <tbody>
+          {% for c in ult_clientes %}
+          <tr>
+            <td><a href="{{ url_for('crm_detalhe', cid=c.id) }}" style="color:var(--text);font-weight:500;text-decoration:none;">{{ c.nome }}</a></td>
+            <td>{{ c.empresa or '—' }}</td>
+            <td><span class="badge badge-{{ c.status }}">{{ c.status }}</span></td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <div class="empty-state">Nenhum cliente cadastrado ainda.<br><a href="{{ url_for('crm_novo') }}">Adicionar primeiro cliente</a></div>
+    {% endif %}
+  </div>
+
+  <!-- Recent transactions -->
+  <div class="card">
+    <div class="card-head">
+      <h2>Últimas transações</h2>
+      <a href="{{ url_for('financeiro') }}" class="btn btn-xs btn-ghost">Ver todas</a>
+    </div>
+    {% if ult_transacoes %}
+    <div class="tbl-wrap">
+      <table>
+        <thead>
+          <tr><th>Descrição</th><th>Categoria</th><th style="text-align:right">Valor</th></tr>
+        </thead>
+        <tbody>
+          {% for t in ult_transacoes %}
+          <tr>
+            <td style="color:var(--text);font-weight:500">{{ t.descricao }}</td>
+            <td>{{ t.categoria or '—' }}</td>
+            <td style="text-align:right;font-weight:600;color:{% if t.tipo=='receita' %}var(--ok-fg){% else %}#ef4444{% endif %}">
+              {% if t.tipo == 'despesa' %}−{% endif %}{{ t.valor | brl }}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <div class="empty-state">Nenhuma transação ainda.<br><a href="{{ url_for('financeiro_nova') }}">Registrar primeira transação</a></div>
+    {% endif %}
+  </div>
+
+</div>
+
+<!-- Pipeline summary -->
+{% if deals_etapa %}
+<div class="card" style="margin-top:1.25rem">
+  <div class="card-head">
+    <h2>Resumo do pipeline</h2>
+    <a href="{{ url_for('pipeline') }}" class="btn btn-xs btn-ghost">Abrir kanban</a>
+  </div>
+  <div class="card-body" style="display:flex;gap:1rem;flex-wrap:wrap;padding:1.25rem 1.375rem">
+    {% set etapa_labels = {'novo':'Novo Lead','contato':'Em Contato','proposta':'Proposta','fechado':'Fechado','perdido':'Perdido'} %}
+    {% for etapa in ['novo','contato','proposta','fechado','perdido'] %}
+    <div style="text-align:center;min-width:80px">
+      <p style="font-size:1.25rem;font-weight:700;color:var(--text)">{{ deals_etapa.get(etapa, 0) }}</p>
+      <p style="font-size:.75rem;color:var(--text-3);margin-top:.125rem">{{ etapa_labels[etapa] }}</p>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+{% endif %}
+
+{% endblock %}

@@ -1,0 +1,151 @@
+{% extends "base.html" %}
+{% block page_title %}Pipeline{% endblock %}
+{% block page_title_topbar %}Pipeline{% endblock %}
+
+{% block content %}
+
+<div class="page-head">
+  <div class="page-head-text">
+    <h1>Pipeline</h1>
+    <p>Arraste os deals entre as etapas do funil.</p>
+  </div>
+  <button class="btn btn-primary btn-sm" onclick="document.getElementById('form-novo').classList.toggle('hidden')">
+    + Novo deal
+  </button>
+</div>
+
+<!-- New deal form (toggleable) -->
+<div id="form-novo" class="card hidden" style="margin-bottom:1.5rem;max-width:680px">
+  <div class="card-head"><h2>Novo deal</h2></div>
+  <div class="card-body">
+    <form method="POST" action="{{ url_for('pipeline_novo') }}">
+      <div class="form-row">
+        <div class="field">
+          <label for="titulo">Título *</label>
+          <input type="text" id="titulo" name="titulo" placeholder="Ex: Proposta de software" required />
+        </div>
+        <div class="field">
+          <label for="valor">Valor (R$)</label>
+          <input type="number" id="valor" name="valor" placeholder="0,00" min="0" step="0.01" />
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="field">
+          <label for="cliente_id">Cliente</label>
+          <select id="cliente_id" name="cliente_id">
+            <option value="">— Sem cliente vinculado —</option>
+            {% for c in clientes %}
+            <option value="{{ c.id }}">{{ c.nome }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="field">
+          <label for="etapa">Etapa inicial</label>
+          <select id="etapa" name="etapa">
+            {% for e in etapas %}
+            <option value="{{ e }}">{{ etapas_label[e] }}</option>
+            {% endfor %}
+          </select>
+        </div>
+      </div>
+      <div style="display:flex;gap:.75rem;margin-top:.25rem">
+        <button type="submit" class="btn btn-primary" style="flex:1">Criar deal</button>
+        <button type="button" class="btn btn-ghost"
+                onclick="document.getElementById('form-novo').classList.add('hidden')">Cancelar</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Kanban -->
+<div class="kanban-wrap">
+  <div class="kanban" id="kanban">
+    {% for etapa in etapas %}
+    <div class="kanban-col" data-etapa="{{ etapa }}" id="col-{{ etapa }}">
+      <div class="kanban-col-head">
+        <span class="kanban-col-title">{{ etapas_label[etapa] }}</span>
+        <span class="kanban-count" id="count-{{ etapa }}">{{ por_etapa[etapa] | length }}</span>
+      </div>
+      <div class="kanban-cards" id="cards-{{ etapa }}">
+        {% for d in por_etapa[etapa] %}
+        <div class="deal-card" draggable="true" data-id="{{ d.id }}">
+          <p class="deal-title">{{ d.titulo }}</p>
+          {% if d.cliente_nome %}
+          <p class="deal-client">{{ d.cliente_nome }}</p>
+          {% endif %}
+          {% if d.valor %}
+          <p class="deal-value">{{ d.valor | brl }}</p>
+          {% endif %}
+          <div class="deal-footer">
+            <span style="font-size:.75rem;color:var(--text-3)">{{ d.criado_em[:10] if d.criado_em else '' }}</span>
+            <form method="POST" action="{{ url_for('pipeline_deletar', did=d.id) }}"
+                  onsubmit="return confirm('Remover este deal?')" style="margin:0">
+              <button type="submit" class="btn btn-xs btn-danger" title="Remover">×</button>
+            </form>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+  var draggedCard = null;
+
+  document.querySelectorAll('.deal-card').forEach(function(card) {
+    card.addEventListener('dragstart', function(e) {
+      draggedCard = card;
+      card.classList.add('dragging');
+      e.dataTransfer.setData('text/plain', card.dataset.id);
+      e.dataTransfer.effectAllowed = 'move';
+    });
+    card.addEventListener('dragend', function() {
+      card.classList.remove('dragging');
+      draggedCard = null;
+    });
+  });
+
+  document.querySelectorAll('.kanban-col').forEach(function(col) {
+    col.addEventListener('dragover', function(e) {
+      e.preventDefault();
+      e.dataTransfer.dropEffect = 'move';
+      col.classList.add('drag-over');
+    });
+    col.addEventListener('dragleave', function(e) {
+      if (!col.contains(e.relatedTarget)) {
+        col.classList.remove('drag-over');
+      }
+    });
+    col.addEventListener('drop', function(e) {
+      e.preventDefault();
+      col.classList.remove('drag-over');
+      var dealId = e.dataTransfer.getData('text/plain');
+      var novaEtapa = col.dataset.etapa;
+      var card = document.querySelector('.deal-card[data-id="' + dealId + '"]');
+      if (!card) return;
+
+      col.querySelector('.kanban-cards').appendChild(card);
+      updateAllCounts();
+
+      fetch('/pipeline/mover', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({deal_id: parseInt(dealId), etapa: novaEtapa})
+      });
+    });
+  });
+
+  function updateAllCounts() {
+    document.querySelectorAll('.kanban-col').forEach(function(col) {
+      var etapa = col.dataset.etapa;
+      var count = col.querySelectorAll('.deal-card').length;
+      document.getElementById('count-' + etapa).textContent = count;
+    });
+  }
+</script>
+{% endblock %}

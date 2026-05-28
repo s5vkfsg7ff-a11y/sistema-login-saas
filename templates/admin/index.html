@@ -1,0 +1,106 @@
+{% extends "base.html" %}
+{% block page_title %}Administração{% endblock %}
+{% block page_title_topbar %}Administração{% endblock %}
+
+{% block content %}
+
+<div class="page-head">
+  <div class="page-head-text">
+    <h1>Painel Admin</h1>
+    <p>Gerencie usuários e visualize métricas do sistema.</p>
+  </div>
+</div>
+
+<!-- System stats -->
+<div class="stats">
+  <div class="stat">
+    <p class="stat-eye">Usuários</p>
+    <p class="stat-num">{{ usuarios | length }}</p>
+  </div>
+  <div class="stat">
+    <p class="stat-eye">Clientes (total)</p>
+    <p class="stat-num">{{ total_clientes }}</p>
+  </div>
+  <div class="stat">
+    <p class="stat-eye">Deals (total)</p>
+    <p class="stat-num">{{ total_deals }}</p>
+  </div>
+  <div class="stat">
+    <p class="stat-eye">Transações (total)</p>
+    <p class="stat-num">{{ total_transacoes }}</p>
+  </div>
+</div>
+
+<!-- Users table -->
+<div class="card">
+  <div class="card-head">
+    <h2>Usuários cadastrados</h2>
+  </div>
+  <div class="tbl-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Nome</th>
+          <th>E-mail</th>
+          <th>Papel</th>
+          <th>Status</th>
+          <th>Cadastrado em</th>
+          <th>Ações</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for u in usuarios %}
+        <tr>
+          <td>{{ u.id }}</td>
+          <td style="font-weight:600;color:var(--text)">
+            {{ u.nome }}
+            {% if u.id == session.get('user_id') %}
+              <span class="badge badge-admin" style="margin-left:.375rem">você</span>
+            {% endif %}
+          </td>
+          <td>{{ u.email }}</td>
+          <td>
+            <span class="badge badge-{{ u.role }}">{{ u.role }}</span>
+          </td>
+          <td>
+            <span class="badge badge-{% if u.ativo %}on{% else %}off{% endif %}">
+              {% if u.ativo %}ativo{% else %}inativo{% endif %}
+            </span>
+          </td>
+          <td>{{ u.criado_em[:10] if u.criado_em else '—' }}</td>
+          <td>
+            {% if u.id != session.get('user_id') %}
+            <div class="row-actions">
+              <!-- Toggle role -->
+              <form method="POST" action="{{ url_for('admin_toggle_role', uid=u.id) }}" style="margin:0">
+                <button type="submit" class="btn btn-xs btn-ghost"
+                        title="{% if u.role == 'admin' %}Rebaixar para usuário{% else %}Promover para admin{% endif %}">
+                  {% if u.role == 'admin' %}↓ Usuário{% else %}↑ Admin{% endif %}
+                </button>
+              </form>
+              <!-- Toggle ativo -->
+              <form method="POST" action="{{ url_for('admin_toggle_ativo', uid=u.id) }}" style="margin:0">
+                <button type="submit" class="btn btn-xs btn-ghost"
+                        title="{% if u.ativo %}Desativar conta{% else %}Ativar conta{% endif %}">
+                  {% if u.ativo %}Desativar{% else %}Ativar{% endif %}
+                </button>
+              </form>
+              <!-- Delete -->
+              <form method="POST" action="{{ url_for('admin_deletar_usuario', uid=u.id) }}"
+                    onsubmit="return confirm('Deletar o usuário {{ u.nome }} e todos os seus dados?')" style="margin:0">
+                <button type="submit" class="btn btn-xs btn-danger" title="Deletar">×</button>
+              </form>
+            </div>
+            {% else %}
+            <span style="font-size:.8125rem;color:var(--text-3)">—</span>
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+{% endblock %}

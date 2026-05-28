@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+{% block page_title %}Nova transação{% endblock %}
+{% block page_title_topbar %}Nova transação{% endblock %}
+
+{% block content %}
+
+<div class="page-head">
+  <div class="page-head-text">
+    <h1>Nova transação</h1>
+    <p>Registre uma receita ou despesa.</p>
+  </div>
+  <a href="{{ url_for('financeiro') }}" class="btn btn-sm btn-ghost">← Voltar</a>
+</div>
+
+<div class="card" style="max-width:560px">
+  <div class="card-head"><h2>Informações</h2></div>
+  <div class="card-body">
+    <form method="POST">
+
+      <!-- Tipo toggle -->
+      <div class="tipo-toggle">
+        <input type="radio" id="tipo-receita" name="tipo" value="receita" checked />
+        <label for="tipo-receita">Receita</label>
+        <input type="radio" id="tipo-despesa" name="tipo" value="despesa" />
+        <label for="tipo-despesa">Despesa</label>
+      </div>
+
+      <div class="field">
+        <label for="descricao">Descrição *</label>
+        <input type="text" id="descricao" name="descricao" placeholder="Ex: Contrato mensal" required autofocus />
+      </div>
+
+      <div class="form-row">
+        <div class="field">
+          <label for="valor">Valor (R$) *</label>
+          <input type="number" id="valor" name="valor" placeholder="0,00" min="0" step="0.01" required />
+        </div>
+        <div class="field">
+          <label for="data">Data *</label>
+          <input type="date" id="data" name="data" value="{{ today }}" required />
+        </div>
+      </div>
+
+      <!-- Categories rendered by JS based on tipo selection -->
+      <div class="field" id="categoria-field">
+        <label for="categoria">Categoria</label>
+        <select id="categoria" name="categoria">
+          <option value="">— Selecione —</option>
+          <optgroup label="Receitas" id="cats-receita">
+            {% for c in cat_receita %}<option value="{{ c }}">{{ c }}</option>{% endfor %}
+          </optgroup>
+          <optgroup label="Despesas" id="cats-despesa" style="display:none">
+            {% for c in cat_despesa %}<option value="{{ c }}">{{ c }}</option>{% endfor %}
+          </optgroup>
+        </select>
+      </div>
+
+      <div style="display:flex;gap:.75rem;margin-top:.25rem">
+        <button type="submit" class="btn btn-primary" style="flex:1">Salvar transação</button>
+        <a href="{{ url_for('financeiro') }}" class="btn btn-ghost">Cancelar</a>
+      </div>
+    </form>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+  document.querySelectorAll('input[name="tipo"]').forEach(function(r) {
+    r.addEventListener('change', function() {
+      var isReceita = this.value === 'receita';
+      document.getElementById('cats-receita').style.display = isReceita ? '' : 'none';
+      document.getElementById('cats-despesa').style.display = isReceita ? 'none' : '';
+      document.getElementById('categoria').value = '';
+    });
+  });
+</script>
+{% endblock %}

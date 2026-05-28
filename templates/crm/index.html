@@ -1,0 +1,92 @@
+{% extends "base.html" %}
+{% block page_title %}Clientes{% endblock %}
+{% block page_title_topbar %}Clientes{% endblock %}
+
+{% block content %}
+
+<div class="page-head">
+  <div class="page-head-text">
+    <h1>Clientes</h1>
+    <p>Gerencie seus contatos e leads.</p>
+  </div>
+  <a href="{{ url_for('crm_novo') }}" class="btn btn-primary btn-sm">+ Novo cliente</a>
+</div>
+
+<!-- Filters -->
+<div style="display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap;margin-bottom:1.25rem">
+  <div class="tabs">
+    <a href="{{ url_for('crm') }}" class="tab {% if not status_filter %}active{% endif %}">
+      Todos <span class="tab-count">{{ totais[''] }}</span>
+    </a>
+    <a href="{{ url_for('crm', status='lead') }}" class="tab {% if status_filter == 'lead' %}active{% endif %}">
+      Lead <span class="tab-count">{{ totais['lead'] }}</span>
+    </a>
+    <a href="{{ url_for('crm', status='ativo') }}" class="tab {% if status_filter == 'ativo' %}active{% endif %}">
+      Ativo <span class="tab-count">{{ totais['ativo'] }}</span>
+    </a>
+    <a href="{{ url_for('crm', status='inativo') }}" class="tab {% if status_filter == 'inativo' %}active{% endif %}">
+      Inativo <span class="tab-count">{{ totais['inativo'] }}</span>
+    </a>
+  </div>
+  <form method="GET" action="{{ url_for('crm') }}" class="search-bar">
+    {% if status_filter %}<input type="hidden" name="status" value="{{ status_filter }}" />{% endif %}
+    <input type="text" name="q" value="{{ busca }}" placeholder="Buscar..." class="search-input" />
+    <button type="submit" class="btn btn-sm btn-ghost">Buscar</button>
+  </form>
+</div>
+
+<div class="card">
+  {% if clientes %}
+  <div class="tbl-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Nome</th>
+          <th>Empresa</th>
+          <th>E-mail</th>
+          <th>Telefone</th>
+          <th>Status</th>
+          <th>Cadastro</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for c in clientes %}
+        <tr>
+          <td>{{ c.id }}</td>
+          <td style="font-weight:600;color:var(--text)">
+            <a href="{{ url_for('crm_detalhe', cid=c.id) }}" style="color:inherit;text-decoration:none;">{{ c.nome }}</a>
+          </td>
+          <td>{{ c.empresa or '—' }}</td>
+          <td>{{ c.email or '—' }}</td>
+          <td>{{ c.telefone or '—' }}</td>
+          <td><span class="badge badge-{{ c.status }}">{{ c.status }}</span></td>
+          <td>{{ c.criado_em[:10] if c.criado_em else '—' }}</td>
+          <td>
+            <div class="row-actions">
+              <a href="{{ url_for('crm_editar', cid=c.id) }}" class="btn btn-xs btn-ghost">Editar</a>
+              <form method="POST" action="{{ url_for('crm_deletar', cid=c.id) }}"
+                    onsubmit="return confirm('Remover {{ c.nome }}?')">
+                <button type="submit" class="btn btn-xs btn-danger">×</button>
+              </form>
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div class="empty-state">
+    {% if busca or status_filter %}
+      Nenhum resultado encontrado. <a href="{{ url_for('crm') }}">Limpar filtros</a>
+    {% else %}
+      <strong>Nenhum cliente ainda.</strong><br>
+      <a href="{{ url_for('crm_novo') }}" style="margin-top:.5rem;display:inline-block">Adicionar primeiro cliente →</a>
+    {% endif %}
+  </div>
+  {% endif %}
+</div>
+
+{% endblock %}

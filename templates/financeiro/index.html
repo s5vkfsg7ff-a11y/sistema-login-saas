@@ -1,0 +1,101 @@
+{% extends "base.html" %}
+{% block page_title %}Financeiro{% endblock %}
+{% block page_title_topbar %}Financeiro{% endblock %}
+
+{% block content %}
+
+<div class="page-head">
+  <div class="page-head-text">
+    <h1>Financeiro</h1>
+    <p>Controle de receitas e despesas.</p>
+  </div>
+  <a href="{{ url_for('financeiro_nova') }}" class="btn btn-primary btn-sm">+ Nova transação</a>
+</div>
+
+<!-- Balance cards -->
+<div class="stats" style="grid-template-columns:repeat(3,1fr)">
+  <div class="stat">
+    <p class="stat-eye">Saldo total</p>
+    <p class="stat-num {% if saldo >= 0 %}ok{% else %}err{% endif %} sm">{{ saldo | brl }}</p>
+  </div>
+  <div class="stat">
+    <p class="stat-eye">Total receitas</p>
+    <p class="stat-num ok sm">{{ total_receita | brl }}</p>
+  </div>
+  <div class="stat">
+    <p class="stat-eye">Total despesas</p>
+    <p class="stat-num err sm">{{ total_despesa | brl }}</p>
+  </div>
+</div>
+
+<!-- This month -->
+<div class="stats" style="grid-template-columns:repeat(2,1fr);margin-top:-0.25rem">
+  <div class="stat">
+    <p class="stat-eye">Receita este mês</p>
+    <p class="stat-num ok sm">{{ receita_mes | brl }}</p>
+  </div>
+  <div class="stat">
+    <p class="stat-eye">Despesa este mês</p>
+    <p class="stat-num err sm">{{ despesa_mes | brl }}</p>
+  </div>
+</div>
+
+<!-- Filter tabs -->
+<div style="margin-bottom:1.25rem">
+  <div class="tabs">
+    <a href="{{ url_for('financeiro') }}" class="tab {% if not tipo_filter %}active{% endif %}">Todas</a>
+    <a href="{{ url_for('financeiro', tipo='receita') }}" class="tab {% if tipo_filter == 'receita' %}active{% endif %}">Receitas</a>
+    <a href="{{ url_for('financeiro', tipo='despesa') }}" class="tab {% if tipo_filter == 'despesa' %}active{% endif %}">Despesas</a>
+  </div>
+</div>
+
+<div class="card">
+  {% if transacoes %}
+  <div class="tbl-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Descrição</th>
+          <th>Tipo</th>
+          <th>Categoria</th>
+          <th>Data</th>
+          <th style="text-align:right">Valor</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for t in transacoes %}
+        <tr>
+          <td>{{ t.id }}</td>
+          <td style="font-weight:500;color:var(--text)">{{ t.descricao }}</td>
+          <td><span class="badge badge-{{ t.tipo }}">{{ t.tipo }}</span></td>
+          <td>{{ t.categoria or '—' }}</td>
+          <td>{{ t.data }}</td>
+          <td style="text-align:right;font-weight:700;color:{% if t.tipo=='receita' %}var(--ok-fg){% else %}#ef4444{% endif %}">
+            {% if t.tipo == 'despesa' %}−{% endif %}{{ t.valor | brl }}
+          </td>
+          <td>
+            <form method="POST" action="{{ url_for('financeiro_deletar', tid=t.id) }}"
+                  onsubmit="return confirm('Remover esta transação?')" style="margin:0">
+              <button type="submit" class="btn btn-xs btn-danger" title="Remover">×</button>
+            </form>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div class="empty-state">
+    {% if tipo_filter %}
+      Nenhuma {{ tipo_filter }} encontrada. <a href="{{ url_for('financeiro') }}">Ver todas</a>
+    {% else %}
+      <strong>Nenhuma transação ainda.</strong><br>
+      <a href="{{ url_for('financeiro_nova') }}" style="margin-top:.5rem;display:inline-block">Registrar primeira transação →</a>
+    {% endif %}
+  </div>
+  {% endif %}
+</div>
+
+{% endblock %}
